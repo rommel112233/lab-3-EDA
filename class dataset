@@ -1,8 +1,7 @@
 public class Dataset{
 
-private:
-ArrayList<Game>data;
-string sortedByAttribute;
+private ArrayList<Game>data;
+private String sortedByAttribute;
 
 public Dataset(ArrayList<Game>data){
 this.data=data;
@@ -12,7 +11,7 @@ public ArrayList<Game> getGamesByPrice(int price){
 
 ArrayList<Game> PrecioSolicitado = new ArrayList<>();
 
-if(sortedByAttribute.equals("price")){
+if("price".equals(sortedByAttribute)){
 int indice = busquedabinariaPrecio(price);
 
 if(indice != -1){
@@ -57,7 +56,7 @@ return -1;
 public ArrayList<Game> getGamesByPriceRange(int lowerPrice, int higherPrice){
 ArrayList<Game> juegoenrangoSolicitado = new ArrayList<>();
 
-if(sortedByAttribute.equals("price")){
+if("price".equals(sortedByAttribute)){
 int indice = busquedabinariaRango(lowerPrice);
 
 while(indice<data.size()){
@@ -93,3 +92,92 @@ izquierda=mitad+1;
 }
 return resultado;
 }
+
+public ArrayList<Game> getGamesByCategory(String category){
+ArrayList<Game> categoriaSolicitada = new ArrayList<>();
+if("category".equals(sortedByAttribute)){
+int indice = busquedabinariaCategoria(category);
+if(indice!= -1){
+int izq = indice;
+while(izq>=0 && data.get(izq).getCategory().equals(category)){
+categoriaSolicitada.add(0,data.get(izq));
+izq--;
+}
+int derecha = indice + 1;
+while(derecha<data.size() && data.get(derecha).getCategory().equals(category)){
+categoriaSolicitada.add(data.get(derecha));
+derecha++;
+}
+}else{ 
+for(int i=0; i<data.size();i++){ 
+if(data.get(i).getCategory().equals(category)){
+categoriaSolicitada.add(data.get(i));
+}
+}
+}
+return categoriaSolicitada;
+}
+
+private int busquedabinariaCategoria(String category){
+int izq=0, derecha=data.size()-1;
+while(izq<=derecha){
+int mitad=(izq+derecha)/2;
+String categoriaenlamitad = data.get(mitad).getCategory();
+int comparador = categoriaenlamitad.compareTo(category);
+if(comparador == 0){
+return mitad;
+}else if(comparador<0){
+izq= mitad+1;
+}else{
+derecha=mitad-1;
+}
+}
+return -1;
+}
+
+public ArrayList<Game> getGamesByQuality(int quality){
+
+ArrayList<Game> calidadsolicitada = new ArrayList<>();
+
+if("quality".equals(sortedByAttribute)){
+int indice = busquedabinariaCalidad(quality);
+
+if(indice != -1){
+int izquierda = indice;
+while(izquierda >= 0 && data.get(izquierda).getQuality() == quality){
+calidadsolicitada.add(0,data.get(izquierda));
+izquierda--; }
+
+int derecha = indice + 1;
+while(derecha<data.size() && data.get(derecha).getQuality() == quality){
+calidadsolicitada.add(data.get(derecha));
+derecha++; }
+}
+}
+else{
+for(int i=0; i<data.size(); i++){
+if(data.get(i).getQuality() == quality){
+calidadsolicitada.add(data.get(i));}
+}
+}
+return calidadsolicitada;
+}
+
+private int busquedabinariaCalidad(int quality){
+int bajo=0, alto=data.size()-1;
+while(bajo<=alto){
+int mitad = (bajo+alto)/2;
+int dato = data.get(mitad).getQuality();
+if(dato==quality){
+return mitad;
+}
+if(dato<quality){
+bajo=mitad+1;
+}
+else{
+alto=mitad-1;
+}
+}
+return -1;
+}
+
