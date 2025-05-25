@@ -78,3 +78,18 @@ juegoenrangoSolicitado.add(data.get(i));
 }
 return juegoenrangoSolicitado;
 }
+
+private int busquedabinariaRango(int lowerPrice){
+int izquierda=0, derecha=data.size()-1, resultado=data.size();
+while(izquierda<=derecha){
+int mitad= (izquierda+derecha)/2;
+int precio=data.get(mitad).getPrice();
+if(precio>=lowerPrice){
+resultado=mitad;
+derecha=mitad-1;
+}else{
+izquierda=mitad+1;
+}
+}
+return resultado;
+}
