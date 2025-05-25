@@ -1,0 +1,80 @@
+public class Dataset{
+
+private:
+ArrayList<Game>data;
+string sortedByAttribute;
+
+public Dataset(ArrayList<Game>data){
+this.data=data;
+this.sortedByAttribute="";}
+
+public ArrayList<Game> getGamesByPrice(int price){
+
+ArrayList<Game> PrecioSolicitado = new ArrayList<>();
+
+if(sortedByAttribute.equals("price")){
+int indice = busquedabinariaPrecio(price);
+
+if(indice != -1){
+int izquierda = indice;
+while(izquierda >= 0 && data.get(izquierda).getPrice() == price){
+PrecioSolicitado.add(0,data.get(izquierda));
+izquierda--; }
+
+int derecha = indice + 1;
+while(derecha<data.size() && data.get(derecha).getPrice() == price){
+PrecioSolicitado.add(data.get(derecha));
+derecha++; }
+}
+}
+else{
+for(int i=0; i<data.size(); i++){
+if(data.get(i).getPrice() == price){
+PrecioSolicitado.add(data.get(i));}
+}
+}
+return PrecioSolicitado;
+}
+
+private int busquedabinariaPrecio(int price){
+int bajo=0, alto=data.size()-1;
+while(bajo<=alto){
+int mitad = (bajo+alto)/2;
+int dato = data.get(mitad).getPrice();
+if(dato==price){
+return mitad;
+}
+if(dato<price){
+bajo=mitad+1;
+}
+else{
+alto=mitad-1;
+}
+}
+return -1;
+}
+
+public ArrayList<Game> getGamesByPriceRange(int lowerPrice, int higherPrice){
+ArrayList<Game> juegoenrangoSolicitado = new ArrayList<>();
+
+if(sortedByAttribute.equals("price")){
+int indice = busquedabinariaRango(lowerPrice);
+
+while(indice<data.size()){
+int precioxposicion= data.get(indice).getPrice();
+if(precioxposicion>higherPrice){
+break;
+}
+juegoenrangoSolicitado.add(data.get(indice));
+indice++;
+}
+}else{
+for(int i=0; i<data.size(); i++){
+int precioxposicion = data.get(i).getPrice();
+if(precioxposicion>=lowerPrice && precioxposicion<=higherPrice){
+juegoenrangoSolicitado.add(data.get(i));
+}
+}
+}
+return juegoenrangoSolicitado;
+}
