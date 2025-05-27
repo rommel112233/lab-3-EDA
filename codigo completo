@@ -435,5 +435,84 @@ return i + 1;
 }
 
 
+public class Main{
+public static void main(String[] args){
+ArrayList<Game> juegos = GenerateData.generateGames(1000); // Cambia 1000 a 100 o 10000 o 1000000 si deseas
+
+System.out.println(" BENCHMARK  DE ORDENAMIENTO  ");
+benchmarkSorts(juegos, "price");
+benchmarkSorts(juegos, "category");
+benchmarkSorts(juegos, "quality");
+
+System.out.println(" BENCHMARK DE BÚSQUEDA ");
+benchmarkSearches(juegos);
+}
+
+public static void benchmarkSorts(ArrayList<Game> originalData, String attribute){
+String[] algorithms = {"bubbleSort", "insertionSort", "selectionSort", "mergeSort", "quickSort", "collectionsSort"};
+System.out.println("\n--- Atributo: " + attribute + " ---");
+
+for (String algorithm : algorithms){
+long totalTime = 0;
+for (int i = 0; i < 3; i++){
+ArrayList<Game> copia = new ArrayList<>();
+for (Game g : originalData){
+copia.add(new Game(g.getName(), g.getCategory(), g.getPrice(), g.getQuality()));
+}
+
+Dataset ds = new Dataset(copia);
+
+long start = System.currentTimeMillis();
+if (algorithm.equals("collectionsSort")){
+ds.sortByAlgorithm("collectionsSort", attribute);
+}else{
+ds.sortByAlgorithm(algorithm, attribute);
+}
+long end = System.currentTimeMillis();
+totalTime += (end - start);
+}
+System.out.println("Algoritmo: " + algorithm + ", Promedio: " + (totalTime / 3) + " ms");
+}
+}
+
+public static void benchmarkSearches(ArrayList<Game> originalData){
+Dataset dsLineal = new Dataset(originalData);
+Dataset dsOrdenadoPrecio = new Dataset(new ArrayList<>(originalData));
+Dataset dsOrdenadoCategoria = new Dataset(new ArrayList<>(originalData));
+Dataset dsOrdenadoCalidad = new Dataset(new ArrayList<>(originalData));
+
+dsOrdenadoPrecio.sortByAlgorithm("quickSort", "price");
+dsOrdenadoCategoria.sortByAlgorithm("quickSort", "category");
+dsOrdenadoCalidad.sortByAlgorithm("quickSort", "quality");
+
+int precioBuscar = originalData.get(0).getPrice();
+String categoriaBuscar = originalData.get(0).getCategory();
+int calidadBuscar = originalData.get(0).getQuality();
+
+long t1 = medir(() -> dsLineal.getGamesByPrice(precioBuscar));
+long t2 = medir(() -> dsOrdenadoPrecio.getGamesByPrice(precioBuscar));
+System.out.println("getGamesByPrice - Lineal: " + t1 + " ms");
+System.out.println("getGamesByPrice - Binaria: " + t2 + " ms");
+
+long t3 = medir(() -> dsLineal.getGamesByCategory(categoriaBuscar));
+long t4 = medir(() -> dsOrdenadoCategoria.getGamesByCategory(categoriaBuscar));
+System.out.println("getGamesByCategory - Lineal: " + t3 + " ms");
+System.out.println("getGamesByCategory - Binaria: " + t4 + " ms");
+
+long t5 = medir(() -> dsLineal.getGamesByQuality(calidadBuscar));
+long t6 = medir(() -> dsOrdenadoCalidad.getGamesByQuality(calidadBuscar));
+System.out.println("getGamesByQuality - Lineal: " + t5 + " ms");
+System.out.println("getGamesByQuality - Binaria: " + t6 + " ms");
+}
+
+public static long medir(Runnable metodo){
+long start = System.nanoTime();
+metodo.run();
+long end = System.nanoTime();
+return (end - start) / 1_000_000; 
+}
+}
+
+
 
 
