@@ -437,8 +437,7 @@ return i + 1;
 
 public class Main{
 public static void main(String[] args){
-ArrayList<Game> juegos = GenerateData.generateGames(1000); // Cambia 1000 a 100 o 10000 o 1000000 si deseas
-
+ArrayList<Game> juegos = GenerateData.generateGames(1000);
 System.out.println(" BENCHMARK  DE ORDENAMIENTO  ");
 benchmarkSorts(juegos, "price");
 benchmarkSorts(juegos, "category");
