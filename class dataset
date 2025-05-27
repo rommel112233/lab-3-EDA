@@ -1,3 +1,7 @@
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
 public class Dataset{
 
 private ArrayList<Game>data;
@@ -108,6 +112,7 @@ while(derecha<data.size() && data.get(derecha).getCategory().equals(category)){
 categoriaSolicitada.add(data.get(derecha));
 derecha++;
 }
+}
 }else{ 
 for(int i=0; i<data.size();i++){ 
 if(data.get(i).getCategory().equals(category)){
@@ -180,6 +185,7 @@ alto=mitad-1;
 }
 return -1;
 }
+
 public ArrayList<Game> sortByAlgorithm(String algorithm, String attribute){
 Comparator<Game> comparador;
 
@@ -222,6 +228,25 @@ break;
 
 sortedByAttribute = attribute;
 return data;
+}
+
+private void countingSortByQuality(){
+int maxQuality = 100;
+int[] count = new int[maxQuality + 1];
+ArrayList<ArrayList<Game>> buckets = new ArrayList<>(maxQuality + 1);
+
+for (int i = 0; i <= maxQuality; i++){
+buckets.add(new ArrayList<>());
+}
+for (Game game : data){
+count[game.getQuality()]++;
+buckets.get(game.getQuality()).add(game);
+}
+ArrayList<Game> sorted = new ArrayList<>();
+for (int i = 0; i <= maxQuality; i++){
+sorted.addAll(buckets.get(i));
+}
+data = sorted;
 }
 
 private void bubbleSort(Comparator<Game> comp){
