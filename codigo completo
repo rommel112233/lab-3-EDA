@@ -1,36 +1,311 @@
-public class Game {
-    String name;
-    String category;
-    int price;
-    int quality;
+import java.util.*;
+import java.io.*;
+
+public class Main {
+    public static void main(String[] args) {
+        // Puedes cambiar el tamaño para los distintos benchmarks
+        ArrayList<Game> juegos = GenerateData.generateGames(1000); // 100, 10000, 1000000
+
+        System.out.println("====== BENCHMARK ORDENAMIENTO ======");
+        benchmarkSorts(juegos, "price");
+        benchmarkSorts(juegos, "category");
+        benchmarkSorts(juegos, "quality");
+
+        System.out.println("\n====== BENCHMARK BÚSQUEDA (1000 juegos) ======");
+        benchmarkSearches(juegos);
+    }
+
+    // Benchmark de ordenamiento
+    public static void benchmarkSorts(ArrayList<Game> originalData, String attribute) {
+        String[] algorithms = {"bubbleSort", "insertionSort", "selectionSort", "mergeSort", "quickSort", "collectionsSort"};
+        System.out.println("\n--- Atributo: " + attribute + " ---");
+
+        for (String algorithm : algorithms) {
+            long totalTime = 0;
+            for (int i = 0; i < 3; i++) {
+                ArrayList<Game> copia = new ArrayList<>();
+                for (Game g : originalData) {
+                    copia.add(new Game(g.getName(), g.getCategory(), g.getPrice(), g.getQuality()));
+                }
+
+                Dataset ds = new Dataset(copia);
+
+                long start = System.currentTimeMillis();
+                if (algorithm.equals("collectionsSort")) {
+                    ds.sortByAlgorithm("collectionsSort", attribute);
+                } else {
+                    ds.sortByAlgorithm(algorithm, attribute);
+                }
+                long end = System.currentTimeMillis();
+                totalTime += (end - start);
+            }
+            System.out.println("Algoritmo: " + algorithm + ", Promedio: " + (totalTime / 3) + " ms");
+        }
+    }
+
+    // Benchmark de búsqueda
+    public static void benchmarkSearches(ArrayList<Game> originalData) {
+        Dataset dsLineal = new Dataset(originalData); // No ordenado
+        Dataset dsOrdenadoPrecio = new Dataset(new ArrayList<>(originalData));
+        Dataset dsOrdenadoCategoria = new Dataset(new ArrayList<>(originalData));
+        Dataset dsOrdenadoCalidad = new Dataset(new ArrayList<>(originalData));
+
+        dsOrdenadoPrecio.sortByAlgorithm("quickSort", "price");
+        dsOrdenadoCategoria.sortByAlgorithm("quickSort", "category");
+        dsOrdenadoCalidad.sortByAlgorithm("quickSort", "quality");
+
+        int precioBuscar = originalData.get(0).getPrice();
+        String categoriaBuscar = originalData.get(0).getCategory();
+        int calidadBuscar = originalData.get(0).getQuality();
+
+        long t1 = medir(() -> dsLineal.getGamesByPrice(precioBuscar));
+        long t2 = medir(() -> dsOrdenadoPrecio.getGamesByPrice(precioBuscar));
+        System.out.println("getGamesByPrice - Lineal: " + t1 + " ms");
+        System.out.println("getGamesByPrice - Binaria: " + t2 + " ms");
+
+        long t3 = medir(() -> dsLineal.getGamesByCategory(categoriaBuscar));
+        long t4 = medir(() -> dsOrdenadoCategoria.getGamesByCategory(categoriaBuscar));
+        System.out.println("getGamesByCategory - Lineal: " + t3 + " ms");
+        System.out.println("getGamesByCategory - Binaria: " + t4 + " ms");
+
+        long t5 = medir(() -> dsLineal.getGamesByQuality(calidadBuscar));
+        long t6 = medir(() -> dsOrdenadoCalidad.getGamesByQuality(calidadBuscar));
+        System.out.println("getGamesByQuality - Lineal: " + t5 + " ms");
+        System.out.println("getGamesByQuality - Binaria: " + t6 + " ms");
+    }
+
+    // Función utilitaria para medir tiempo
+    public static long medir(Runnable metodo) {
+        long start = System.currentTimeMillis();
+        metodo.run();
+        long end = System.currentTimeMillis();
+        return end - start;
+    }
+}
+
+// ---------- Clase Game ----------
+class Game {
+    String name, category;
+    int price, quality;
+
     Game(String name, String category, int price, int quality) {
-        this.name = name;
-        this.category = category;
-        this.price = price;
-        this.quality = quality;
+        this.name = name; this.category = category;
+        this.price = price; this.quality = quality;
     }
-    public String getName() {
-        return name;
+
+    public String getName() { return name; }
+    public String getCategory() { return category; }
+    public int getPrice() { return price; }
+    public int getQuality() { return quality; }
+
+    public void setName(String name) { this.name = name; }
+    public void setCategory(String category) { this.category = category; }
+    public void setPrice(int price) { this.price = price; }
+    public void setQuality(int quality) { this.quality = quality; }
+}
+
+// ---------- Clase Dataset ----------
+class Dataset {
+    private ArrayList<Game> data;
+    private String sortedByAttribute;
+
+    public Dataset(ArrayList<Game> data) {
+        this.data = data;
+        this.sortedByAttribute = "";
     }
-    public String getCategory() {
-        return category;
+
+    public ArrayList<Game> getGamesByPrice(int price) {
+        ArrayList<Game> r = new ArrayList<>();
+        if ("price".equals(sortedByAttribute)) {
+            int i = binarySearchPrice(price);
+            if (i != -1) {
+                int izq = i, der = i + 1;
+                while (izq >= 0 && data.get(izq).getPrice() == price) r.add(0, data.get(izq--));
+                while (der < data.size() && data.get(der).getPrice() == price) r.add(data.get(der++));
+            }
+        } else {
+            for (Game g : data) if (g.getPrice() == price) r.add(g);
+        }
+        return r;
     }
-    public int getPrice() {
-        return price;
+
+    private int binarySearchPrice(int price) {
+        int l = 0, h = data.size() - 1;
+        while (l <= h) {
+            int m = (l + h) / 2;
+            int p = data.get(m).getPrice();
+            if (p == price) return m;
+            else if (p < price) l = m + 1;
+            else h = m - 1;
+        }
+        return -1;
     }
-    public int getQuality() {
-        return quality;
+
+    public ArrayList<Game> getGamesByCategory(String cat) {
+        ArrayList<Game> r = new ArrayList<>();
+        if ("category".equals(sortedByAttribute)) {
+            int i = binarySearchCategory(cat);
+            if (i != -1) {
+                int izq = i, der = i + 1;
+                while (izq >= 0 && data.get(izq).getCategory().equals(cat)) r.add(0, data.get(izq--));
+                while (der < data.size() && data.get(der).getCategory().equals(cat)) r.add(data.get(der++));
+            }
+        } else {
+            for (Game g : data) if (g.getCategory().equals(cat)) r.add(g);
+        }
+        return r;
     }
-    public void setName(String name) {
-        this.name = name;
+
+    private int binarySearchCategory(String cat) {
+        int l = 0, h = data.size() - 1;
+        while (l <= h) {
+            int m = (l + h) / 2;
+            int cmp = data.get(m).getCategory().compareTo(cat);
+            if (cmp == 0) return m;
+            else if (cmp < 0) l = m + 1;
+            else h = m - 1;
+        }
+        return -1;
     }
-    public void setCategory(String category) {
-        this.category = category;
+
+    public ArrayList<Game> getGamesByQuality(int q) {
+        ArrayList<Game> r = new ArrayList<>();
+        if ("quality".equals(sortedByAttribute)) {
+            int i = binarySearchQuality(q);
+            if (i != -1) {
+                int izq = i, der = i + 1;
+                while (izq >= 0 && data.get(izq).getQuality() == q) r.add(0, data.get(izq--));
+                while (der < data.size() && data.get(der).getQuality() == q) r.add(data.get(der++));
+            }
+        } else {
+            for (Game g : data) if (g.getQuality() == q) r.add(g);
+        }
+        return r;
     }
-    public void setPrice(int price) {
-        this.price = price;
+
+    private int binarySearchQuality(int q) {
+        int l = 0, h = data.size() - 1;
+        while (l <= h) {
+            int m = (l + h) / 2;
+            int v = data.get(m).getQuality();
+            if (v == q) return m;
+            else if (v < q) l = m + 1;
+            else h = m - 1;
+        }
+        return -1;
     }
-    public void setQuality(int quality) {
-        this.quality = quality;
+
+    public ArrayList<Game> sortByAlgorithm(String algorithm, String attribute) {
+        Comparator<Game> comp;
+        switch (attribute) {
+            case "price": comp = Comparator.comparingInt(Game::getPrice); break;
+            case "category": comp = Comparator.comparing(Game::getCategory); break;
+            case "quality": comp = Comparator.comparingInt(Game::getQuality); break;
+            default: comp = Comparator.comparingInt(Game::getPrice); attribute = "price";
+        }
+
+        switch (algorithm) {
+            case "bubbleSort": bubbleSort(comp); break;
+            case "insertionSort": insertionSort(comp); break;
+            case "selectionSort": selectionSort(comp); break;
+            case "mergeSort": data = mergeSort(data, comp); break;
+            case "quickSort": quickSort(0, data.size() - 1, comp); break;
+            default: Collections.sort(data, comp);
+        }
+
+        sortedByAttribute = attribute;
+        return data;
+    }
+
+    private void bubbleSort(Comparator<Game> comp) {
+        for (int i = 0; i < data.size() - 1; i++)
+            for (int j = 0; j < data.size() - 1 - i; j++)
+                if (comp.compare(data.get(j), data.get(j + 1)) > 0)
+                    Collections.swap(data, j, j + 1);
+    }
+
+    private void insertionSort(Comparator<Game> comp) {
+        for (int i = 1; i < data.size(); i++) {
+            Game curr = data.get(i);
+            int j = i - 1;
+            while (j >= 0 && comp.compare(data.get(j), curr) > 0)
+                data.set(j + 1, data.get(j--));
+            data.set(j + 1, curr);
+        }
+    }
+
+    private void selectionSort(Comparator<Game> comp) {
+        for (int i = 0; i < data.size() - 1; i++) {
+            int min = i;
+            for (int j = i + 1; j < data.size(); j++)
+                if (comp.compare(data.get(j), data.get(min)) < 0) min = j;
+            Collections.swap(data, i, min);
+        }
+    }
+
+    private ArrayList<Game> mergeSort(ArrayList<Game> list, Comparator<Game> comp) {
+        if (list.size() <= 1) return list;
+        int mid = list.size() / 2;
+        ArrayList<Game> left = mergeSort(new ArrayList<>(list.subList(0, mid)), comp);
+        ArrayList<Game> right = mergeSort(new ArrayList<>(list.subList(mid, list.size())), comp);
+        return merge(left, right, comp);
+    }
+
+    private ArrayList<Game> merge(ArrayList<Game> l, ArrayList<Game> r, Comparator<Game> comp) {
+        ArrayList<Game> res = new ArrayList<>();
+        int i = 0, j = 0;
+        while (i < l.size() && j < r.size())
+            res.add(comp.compare(l.get(i), r.get(j)) <= 0 ? l.get(i++) : r.get(j++));
+        while (i < l.size()) res.add(l.get(i++));
+        while (j < r.size()) res.add(r.get(j++));
+        return res;
+    }
+
+    private void quickSort(int low, int high, Comparator<Game> comp) {
+        if (low < high) {
+            int pi = partition(low, high, comp);
+            quickSort(low, pi - 1, comp);
+            quickSort(pi + 1, high, comp);
+        }
+    }
+
+    private int partition(int low, int high, Comparator<Game> comp) {
+        Game pivot = data.get(high);
+        int i = low - 1;
+        for (int j = low; j < high; j++)
+            if (comp.compare(data.get(j), pivot) <= 0)
+                Collections.swap(data, ++i, j);
+        Collections.swap(data, i + 1, high);
+        return i + 1;
+    }
+}
+
+// ---------- Clase GenerateData ----------
+class GenerateData {
+    private static final String[] names = {"Dragon", "Empire", "Quest", "Galaxy", "Legends", "Warrior", "Knight", "Rogue", "Space"};
+    private static final String[] categories = {"Acción", "Aventura", "Estrategia", "RPG", "Deportes", "Simulación", "Puzzle", "Party Game", "Shooter"};
+
+    public static ArrayList<Game> generateGames(int n) {
+        ArrayList<Game> games = new ArrayList<>();
+        Random rand = new Random();
+        for (int i = 0; i < n; i++) {
+            String name = names[rand.nextInt(names.length)] + names[rand.nextInt(names.length)];
+            String category = categories[rand.nextInt(categories.length)];
+            int price = rand.nextInt(70001);
+            int quality = rand.nextInt(101);
+            games.add(new Game(name, category, price, quality));
+        }
+        return games;
+    }
+
+    public static void guardarEnArchivo(ArrayList<Game> juegos, String archivo) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(archivo))) {
+            for (Game g : juegos) {
+                writer.write(g.getName() + "," + g.getCategory() + "," + g.getPrice() + "," + g.getQuality() + "\n");
+            }
+            System.out.println("Datos guardados en " + archivo);
+        } catch (IOException e) {
+            System.err.println("Error al guardar archivo: " + e.getMessage());
+        }
     }
 }
